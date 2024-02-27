@@ -2,8 +2,8 @@
 // Created by zyl on 2024/1/9.
 //
 
-#ifndef RPC_LOG_HPP
-#define RPC_LOG_HPP
+#ifndef RPC_LOG_H
+#define RPC_LOG_H
 
 #include <string>
 #include <queue>
@@ -152,4 +152,4 @@ private:
 
 }
 
-#endif //RPC_LOG_HPP
+#endif //RPC_LOG_H

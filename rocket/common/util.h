@@ -2,8 +2,8 @@
 // Created by zyl on 2024/1/10.
 //
 
-#ifndef RPC_UTIL_HPP
-#define RPC_UTIL_HPP
+#ifndef RPC_UTIL_H
+#define RPC_UTIL_H
 
 #include <sys/types.h>
 #include <unistd.h>
@@ -14,4 +14,4 @@ namespace rocket{
     int64_t getNowMs();
 }
 
-#endif //RPC_UTIL_HPP
+#endif //RPC_UTIL_H

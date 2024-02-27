@@ -2,8 +2,8 @@
 // Created by zyl on 2024/1/10.
 //
 
-#ifndef RPC_CONFIG_HPP
-#define RPC_CONFIG_HPP
+#ifndef RPC_CONFIG_H
+#define RPC_CONFIG_H
 
 #include <map>
 #include <tinyxml/tinyxml.h>
@@ -23,4 +23,4 @@ namespace rocket{
     };
 }
 
-#endif //RPC_CONFIG_HPP
+#endif //RPC_CONFIG_H
