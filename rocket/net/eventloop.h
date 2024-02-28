@@ -33,6 +33,9 @@ public:
 
     void addTimerEvent(TimerEvent::s_ptr event);
 
+public:
+    static EventLoop* GetCurrentEventLoop(); // 获取当前线程的EventLoop对象
+
 private:
     void dealWakeup();
 
