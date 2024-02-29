@@ -77,7 +77,7 @@ void TcpServer::onAccept() {
     // 获取一个 IO 线程
     IOThread* io_thread = m_io_thread_group->getIOThread();
     // 创建 TCP 连接对象
-    TcpConnection::s_ptr connetion = std::make_shared<TcpConnection>(io_thread, client_fd, 128, peer_addr);
+    TcpConnection::s_ptr connetion = std::make_shared<TcpConnection>(io_thread->getEventLoop(), client_fd, 128, peer_addr);
     connetion->setState(Connected);
 
     // 将连接对象添加到客户端连接集合中

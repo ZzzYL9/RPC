@@ -10,7 +10,7 @@
 #include <unistd.h>
 #include "../rocket/common/log.h"
 #include "../rocket/common/config.h"
-// #include "../rocket/net/tcp/tcp_client.h"
+#include "../rocket/net/tcp/tcp_client.h"
 #include "../rocket/net/tcp/net_addr.h"
 #include "../rocket/net/tcp/tcp_server.h"
 
@@ -45,8 +45,14 @@ void test_connect() {
     char buf[100];
     rt = read(fd, buf, 100);
     DEBUGLOG("success read %d bytes, [%s]", rt, std::string(buf).c_str());
+}
 
-
+void test_tcp_client(){
+  rocket::IPNetAddr::s_ptr addr = std::make_shared<rocket::IPNetAddr>("127.0.0.1", 12346);
+  rocket::TcpClient client(addr);
+  client.connect([addr]() {
+    DEBUGLOG("connnect to [%s] success", addr->toString().c_str());
+  });
 }
 
 int main() {
@@ -61,7 +67,8 @@ int main() {
 
 //   rocket::Logger::InitGlobalLogger(0);
 
-  test_connect();
+  // test_connect();
+  test_tcp_client();
   return 0;
   
 }

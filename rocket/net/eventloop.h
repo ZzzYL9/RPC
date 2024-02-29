@@ -33,6 +33,8 @@ public:
 
     void addTimerEvent(TimerEvent::s_ptr event);
 
+    bool isLooping();
+
 public:
     static EventLoop* GetCurrentEventLoop(); // 获取当前线程的EventLoop对象
 
@@ -61,6 +63,8 @@ private:
     Mutex m_mutex;
 
     Timer* m_timer{NULL};
+
+    bool m_is_looping {false};
 };
 }
 
