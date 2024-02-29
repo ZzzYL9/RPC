@@ -100,14 +100,14 @@ namespace rocket{
     }
 
     void Logger::pushLog(const std::string &msg) {
-        ScopeMutext<Mutex> lock(m_mutex); // 上锁
+        ScopeMutex<Mutex> lock(m_mutex); // 上锁
         m_buffer.push(msg);
         lock.unlock(); // 这步可以省略，因为析构中做了释放锁的操作
     }
 
     // Logger本质是单例的全局对象，多个线程同时操作log方法需要加锁
     void Logger::log() {
-        ScopeMutext<Mutex> lock(m_mutex); // 上锁
+        ScopeMutex<Mutex> lock(m_mutex); // 上锁
         std::queue<std::string> tmp;
         m_buffer.swap(tmp); // 先拿出来，避免占用时间过长
 

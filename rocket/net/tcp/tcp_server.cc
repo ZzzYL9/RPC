@@ -1,6 +1,6 @@
 #include "tcp_server.h"
 #include "../eventloop.h"
-// #include "rocket/net/tcp/tcp_connection.h"
+#include "tcp_connection.h"
 #include "../../common/log.h"
 #include "../../common/config.h"
 
@@ -69,19 +69,19 @@ void TcpServer::onAccept() {
     // 接受客户端连接
     auto re = m_acceptor->accept();
     int client_fd = re.first;
-    // NetAddr::s_ptr peer_addr = re.second;
+    NetAddr::s_ptr peer_addr = re.second;
     // 客户端连接计数加一
     m_client_counts++;
 
-    // 把 cleintfd 添加到任意 IO 线程里面
+    // 把 clientfd 添加到任意 IO 线程里面
     // 获取一个 IO 线程
-    // IOThread* io_thread = m_io_thread_group->getIOThread();
+    IOThread* io_thread = m_io_thread_group->getIOThread();
     // 创建 TCP 连接对象
-    // TcpConnection::s_ptr connetion = std::make_shared<TcpConnection>(io_thread->getEventLoop(), client_fd, 128, peer_addr, m_local_addr);
-    // connetion->setState(Connected);
+    TcpConnection::s_ptr connetion = std::make_shared<TcpConnection>(io_thread, client_fd, 128, peer_addr);
+    connetion->setState(Connected);
 
     // 将连接对象添加到客户端连接集合中
-    // m_client.insert(connetion);
+    m_client.insert(connetion);
 
     INFOLOG("TcpServer succ get client, fd=%d", client_fd);
 }

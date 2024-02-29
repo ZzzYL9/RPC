@@ -17,6 +17,7 @@
     if(rt == -1){ \
         ERRORLOG("failed epoll_ctl when add fd %d, errno = %d, error info = %s", event->getFd(), errno, strerror(errno)); \
     } \
+    m_listen_fds.insert(event->getFd()); \
     DEBUGLOG("add event success, fd[%d]", event->getFd()); \
 
 // 如果没有找到直接退出
@@ -32,6 +33,7 @@
     if(rt == -1){ \
         ERRORLOG("failed epoll_ctl when add fd %d, errno = %d, error info = %s", event->getFd(), errno, strerror(errno)); \
     } \
+    m_listen_fds.erase(event->getFd()); \
     DEBUGLOG("delete event success, fd[%d]", event->getFd()); \
 
 namespace rocket{
@@ -76,7 +78,7 @@ namespace rocket{
 
     void EventLoop::loop(){
         while(!m_stop_flag) {
-            ScopeMutext<Mutex> lock(m_mutex); // 加锁访问资源
+            ScopeMutex<Mutex> lock(m_mutex); // 加锁访问资源
             std::queue<std::function<void()>> tmp_tasks;
             m_pending_tasks.swap(tmp_tasks);
             lock.unlock();
@@ -165,7 +167,7 @@ namespace rocket{
     }
 
     void EventLoop::addTask(std::function<void()> cb, bool is_wake_up /*==false*/){
-        ScopeMutext<Mutex> lock(m_mutex);
+        ScopeMutex<Mutex> lock(m_mutex);
         m_pending_tasks.push(cb);
         lock.unlock();
         if(is_wake_up){

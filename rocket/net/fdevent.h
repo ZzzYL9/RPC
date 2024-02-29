@@ -20,9 +20,14 @@ public:
 
     ~FdEvent();
 
+    void setNonBlock();
+
     std::function<void()> handler(TriggerEvent event_type);
 
     void listen(TriggerEvent event_type, std::function<void()> callback);
+
+    //取消监听
+    void cancle(TriggerEvent event_type);
 
     int getFd() const{
         return m_fd;
@@ -33,7 +38,7 @@ public:
     }
 
 protected:
-    int m_fd = -1;
+    int m_fd {-1};
 
     epoll_event m_listen_events;
 
