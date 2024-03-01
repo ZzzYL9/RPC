@@ -7,8 +7,9 @@
 #include "net_addr.h"
 #include "tcp_buffer.h"
 #include "../io_thread.h"
-// #include "rocket/net/coder/abstract_coder.h"
-// #include "rocket/net/rpc/rpc_dispatcher.h"
+#include "../abstract_protocol.h"
+#include "../abstract_coder.h"
+// #include "../rpc_dispatcher.h"
 
 namespace rocket {
 
@@ -32,7 +33,7 @@ class TcpConnection {
 
     public:
     // TcpConnection(EventLoop* event_loop, int fd, int buffer_size, NetAddr::s_ptr peer_addr, NetAddr::s_ptr local_addr, TcpConnectionType type = TcpConnectionByServer);
-    TcpConnection(EventLoop* event_loop, int fd, int buffer_size, NetAddr::s_ptr peer_addr);
+    TcpConnection(EventLoop* event_loop, int fd, int buffer_size, NetAddr::s_ptr peer_addr, TcpConnectionType type = TcpConnectionByServer);
     
 
     ~TcpConnection();
@@ -62,9 +63,9 @@ class TcpConnection {
     // 启动监听可读事件
     void listenRead();
 
-    // void pushSendMessage(AbstractProtocol::s_ptr message, std::function<void(AbstractProtocol::s_ptr)> done);
+    void pushSendMessage(AbstractProtocol::s_ptr message, std::function<void(AbstractProtocol::s_ptr)> done);
 
-    // void pushReadMessage(const std::string& msg_id, std::function<void(AbstractProtocol::s_ptr)> done);
+    void pushReadMessage(const std::string& msg_id, std::function<void(AbstractProtocol::s_ptr)> done);
 
     // NetAddr::s_ptr getLocalAddr();
 
@@ -85,7 +86,7 @@ class TcpConnection {
 
     FdEvent* m_fd_event {NULL};
 
-    // AbstractCoder* m_coder {NULL};
+    AbstractCoder* m_coder {NULL};
 
     TcpState m_state;
 
@@ -93,11 +94,11 @@ class TcpConnection {
 
     TcpConnectionType m_connection_type {TcpConnectionByServer};
 
-    // // std::pair<AbstractProtocol::s_ptr, std::function<void(AbstractProtocol::s_ptr)>>
-    // std::vector<std::pair<AbstractProtocol::s_ptr, std::function<void(AbstractProtocol::s_ptr)>>> m_write_dones;
+    // std::pair<AbstractProtocol::s_ptr, std::function<void(AbstractProtocol::s_ptr)>>
+    std::vector<std::pair<AbstractProtocol::s_ptr, std::function<void(AbstractProtocol::s_ptr)>>> m_write_dones;
 
-    // // key 为 msg_id
-    // std::map<std::string, std::function<void(AbstractProtocol::s_ptr)>> m_read_dones;
+    // key 为 msg_id
+    std::map<std::string, std::function<void(AbstractProtocol::s_ptr)>> m_read_dones;
   
 };
 

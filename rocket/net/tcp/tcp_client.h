@@ -4,7 +4,7 @@
 #include "net_addr.h"
 #include "eventloop.h"
 #include "tcp_connection.h"
-#include "../abstact_protocol.h"
+#include "../abstract_protocol.h"
 
 namespace rocket{
 
@@ -24,7 +24,7 @@ class TcpClient{
 
         // 异步的读取message
         // 如果读取message成功， 会调用done函数， 函数的入参就是message对象
-        void readMessage(AbstractProtocol::s_ptr message, std::function<void(AbstractProtocol::s_ptr)> done);
+        void readMessage(const std::string& msg_id, std::function<void(AbstractProtocol::s_ptr)> done);
 
     private:
         NetAddr::s_ptr m_peer_addr;
