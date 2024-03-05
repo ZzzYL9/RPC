@@ -2,13 +2,13 @@
 #include "../../common/log.h"
 #include "../fd_event_group.h"
 #include "tcp_connection.h"
-#include "../string_coder.h"
-// #include "rocket/net/coder/tinypb_coder.h"
+#include "../coder/string_coder.h"
+#include "../coder/tinypb_coder.h"
 
 namespace rocket {
 
-TcpConnection::TcpConnection(EventLoop* event_loop, int fd, int buffer_size, NetAddr::s_ptr peer_addr, TcpConnectionType type /*= TcpConnectionByServer*/)
-    : m_event_loop(event_loop), m_peer_addr(peer_addr), m_state(NotConnected), m_fd(fd), m_connection_type(type) {
+TcpConnection::TcpConnection(EventLoop* event_loop, int fd, int buffer_size, NetAddr::s_ptr peer_addr, NetAddr::s_ptr local_addr, TcpConnectionType type /*= TcpConnectionByServer*/)
+    : m_event_loop(event_loop), m_local_addr(local_addr), m_peer_addr(peer_addr), m_state(NotConnected), m_fd(fd), m_connection_type(type) {
     
     m_in_buffer = std::make_shared<TcpBuffer>(buffer_size);
     m_out_buffer = std::make_shared<TcpBuffer>(buffer_size);
@@ -16,8 +16,8 @@ TcpConnection::TcpConnection(EventLoop* event_loop, int fd, int buffer_size, Net
     m_fd_event = FdEventGroup::GetFdEventGroup()->getFdEvent(fd);
     m_fd_event->setNonBlock();
 
-    // m_coder = new TinyPBCoder();
-    m_coder = new StringCoder();
+    m_coder = new TinyPBCoder();
+    // m_coder = new StringCoder();
     if(m_connection_type == TcpConnectionByServer){
         listenRead();
     }
@@ -88,24 +88,23 @@ void TcpConnection::onRead() {
 }
 
 void TcpConnection::excute() {
-    if(m_connection_type == TcpConnectionByServer) {
-         // 将 RPC 请求执行业务逻辑，获取 RPC 响应, 再把 RPC 响应发送回去
-        std::vector<char> tmp;
-        int size = m_in_buffer->readAble();
-        tmp.resize(size);
-        m_in_buffer->readFromBuffer(tmp, size);
+    if (m_connection_type == TcpConnectionByServer) {
+        // 将 RPC 请求执行业务逻辑，获取 RPC 响应, 再把 RPC 响应发送回去
+        std::vector<AbstractProtocol::s_ptr> result;
+        m_coder->decode(result, m_in_buffer);
+        for (size_t i = 0;  i < result.size(); ++i) {
+            // 1. 针对每一个请求，调用 rpc 方法，获取响应 message
+            // 2. 将响应 message 放入到发送缓冲区，监听可写事件回包
+            INFOLOG("success get request[%s] from client[%s]", result[i]->m_msg_id.c_str(), m_peer_addr->toString().c_str());
 
-        std::string msg;
-        for(size_t i = 0; i < tmp.size(); ++i){
-            msg += tmp[i];
+            std::shared_ptr<TinyPBProtocol> message = std::make_shared<TinyPBProtocol>();
+            // message->m_pb_data = "hello. this is rocket rpc test data";
+            // message->m_msg_id = result[i]->m_msg_id;
+
+            RpcDispatcher::GetRpcDispatcher()->dispatch(result[i], message, this);
         }
-        INFOLOG("success get request[%s] from client[%s]", msg.c_str(), m_peer_addr->toString().c_str());
 
-        m_out_buffer->writeToBuffer(msg.c_str(), msg.length()); //需要发送的数据先放到buffer中
-
-        listenWrite();
-    }else {
-        // 将从 buffer 里 decode 得到 message 对象,执行其回调
+    } else {
         // 从 buffer 里 decode 得到 message 对象, 执行其回调
         std::vector<AbstractProtocol::s_ptr> result;
         m_coder->decode(result, m_in_buffer);
@@ -121,18 +120,13 @@ void TcpConnection::excute() {
 
     }
 
-
-   
-    // m_fd_event->listen(FdEvent::OUT_EVENT, std::bind(&TcpConnection::onWrite, this));
-    // m_event_loop->addEpollEvent(m_fd_event);  
-
 }
 
 
-// void TcpConnection::reply(std::vector<AbstractProtocol::s_ptr>& replay_messages) {
-//     m_coder->encode(replay_messages, m_out_buffer);
-//     listenWrite();
-// }
+void TcpConnection::reply(std::vector<AbstractProtocol::s_ptr>& replay_messages) {
+    m_coder->encode(replay_messages, m_out_buffer);
+    listenWrite();
+}
 
 void TcpConnection::onWrite() {
     // 将当前 out_buffer 里面的数据全部发送给 client
@@ -235,14 +229,12 @@ void TcpConnection::setConnectionType(TcpConnectionType type) {
 
 
 void TcpConnection::listenWrite() {
-
     m_fd_event->listen(FdEvent::OUT_EVENT, std::bind(&TcpConnection::onWrite, this));
     m_event_loop->addEpollEvent(m_fd_event);
 }
 
 
 void TcpConnection::listenRead() {
-
     m_fd_event->listen(FdEvent::IN_EVENT, std::bind(&TcpConnection::onRead, this));
     m_event_loop->addEpollEvent(m_fd_event);
 }
@@ -256,18 +248,17 @@ void TcpConnection::pushReadMessage(const std::string& msg_id, std::function<voi
     m_read_dones.insert(std::make_pair(msg_id, done));
 }
 
+NetAddr::s_ptr TcpConnection::getLocalAddr() {
+    return m_local_addr;
+}
 
-// NetAddr::s_ptr TcpConnection::getLocalAddr() {
-//     return m_local_addr;
-// }
-
-// NetAddr::s_ptr TcpConnection::getPeerAddr() {
-//     return m_peer_addr;
-// }
+NetAddr::s_ptr TcpConnection::getPeerAddr() {
+    return m_peer_addr;
+}
 
 
-// int TcpConnection::getFd() {
-//     return m_fd;
-// }
+int TcpConnection::getFd() {
+    return m_fd;
+}
 
 }

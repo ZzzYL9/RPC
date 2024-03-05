@@ -58,9 +58,9 @@ void TcpServer::init() {
     m_main_event_loop->addEpollEvent(m_listen_fd_event);
 
     // 创建清理客户端定时器事件
-    // m_clear_client_timer_event = std::make_shared<TimerEvent>(5000, true, std::bind(&TcpServer::ClearClientTimerFunc, this));
+    m_clear_client_timer_event = std::make_shared<TimerEvent>(5000, true, std::bind(&TcpServer::ClearClientTimerFunc, this));
     // 将清理客户端定时器事件添加到主事件循环中
-    // m_main_event_loop->addTimerEvent(m_clear_client_timer_event);
+    m_main_event_loop->addTimerEvent(m_clear_client_timer_event);
 
 }
 
@@ -77,7 +77,7 @@ void TcpServer::onAccept() {
     // 获取一个 IO 线程
     IOThread* io_thread = m_io_thread_group->getIOThread();
     // 创建 TCP 连接对象
-    TcpConnection::s_ptr connetion = std::make_shared<TcpConnection>(io_thread->getEventLoop(), client_fd, 128, peer_addr);
+    TcpConnection::s_ptr connetion = std::make_shared<TcpConnection>(io_thread->getEventLoop(), client_fd, 128, peer_addr, m_local_addr);
     connetion->setState(Connected);
 
     // 将连接对象添加到客户端连接集合中
@@ -92,21 +92,21 @@ void TcpServer::start() {
 }
 
 // 清理客户端连接的定时器回调函数
-// void TcpServer::ClearClientTimerFunc() {
-//     auto it = m_client.begin();
-//     // 遍历客户端连接集合
-//     for (it = m_client.begin(); it != m_client.end(); ) {
-//         // TcpConnection::ptr s_conn = i.second;
-//             // DebugLog << "state = " << s_conn->getState();
-//         // 检查连接是否有效并且处于关闭状态，若是，则从集合中删除
-//         if ((*it) != nullptr && (*it).use_count() > 0 && (*it)->getState() == Closed) {
-//             // need to delete TcpConnection
-//             DEBUGLOG("TcpConection [fd:%d] will delete, state=%d", (*it)->getFd(), (*it)->getState());
-//             it = m_client.erase(it);
-//         } else {
-//             it++;
-//         }
-//     }
-// }
+void TcpServer::ClearClientTimerFunc() {
+    auto it = m_client.begin();
+    // 遍历客户端连接集合
+    for (it = m_client.begin(); it != m_client.end(); ) {
+        // TcpConnection::ptr s_conn = i.second;
+            // DebugLog << "state = " << s_conn->getState();
+        // 检查连接是否有效并且处于关闭状态，若是，则从集合中删除
+        if ((*it) != nullptr && (*it).use_count() > 0 && (*it)->getState() == Closed) {
+            // need to delete TcpConnection
+            DEBUGLOG("TcpConection [fd:%d] will delete, state=%d", (*it)->getFd(), (*it)->getState());
+            it = m_client.erase(it);
+        } else {
+            it++;
+        }
+    }
+}
 
 }

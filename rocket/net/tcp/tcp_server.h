@@ -44,7 +44,7 @@ private:
 
     std::set<TcpConnection::s_ptr> m_client;
 
-//   TimerEvent::s_ptr m_clear_client_timer_event;
+    TimerEvent::s_ptr m_clear_client_timer_event;
 
 };
 

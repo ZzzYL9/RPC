@@ -9,20 +9,20 @@ namespace rocket {
 
 class FdEventGroup {
 
- public:
+public:
 
-  FdEventGroup(int size);
+    FdEventGroup(int size);
 
-  ~FdEventGroup();
-  FdEvent* getFdEvent(int fd);
+    ~FdEventGroup();
+    FdEvent* getFdEvent(int fd);
 
- public:
-  static FdEventGroup* GetFdEventGroup();
+public:
+    static FdEventGroup* GetFdEventGroup();
 
- private:
-  int m_size {0};
-  std::vector<FdEvent*> m_fd_group;
-  Mutex m_mutex;
+private:
+    int m_size {0};
+    std::vector<FdEvent*> m_fd_group;
+    Mutex m_mutex;
 
 };
 

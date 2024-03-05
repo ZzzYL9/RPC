@@ -4,14 +4,13 @@
 #include <functional>
 #include <sys/epoll.h>
 
-namespace rocket{
-
+namespace rocket {
 class FdEvent {
 public:
-
-    enum TriggerEvent{
+    enum TriggerEvent {
         IN_EVENT = EPOLLIN,
         OUT_EVENT = EPOLLOUT,
+        ERROR_EVENT = EPOLLERR,
     };
 
     FdEvent(int fd);
@@ -24,12 +23,12 @@ public:
 
     std::function<void()> handler(TriggerEvent event_type);
 
-    void listen(TriggerEvent event_type, std::function<void()> callback);
+    void listen(TriggerEvent event_type, std::function<void()> callback, std::function<void()> error_callback = nullptr);
 
-    //取消监听
+    // 取消监听
     void cancle(TriggerEvent event_type);
 
-    int getFd() const{
+    int getFd() const {
         return m_fd;
     }
 
@@ -37,14 +36,16 @@ public:
         return m_listen_events;
     }
 
+
 protected:
     int m_fd {-1};
 
     epoll_event m_listen_events;
 
-    std::function<void()> m_read_callback;
-    std::function<void()> m_write_callback;
-    
+    std::function<void()> m_read_callback {nullptr};
+    std::function<void()> m_write_callback {nullptr};
+    std::function<void()> m_error_callback {nullptr};
+
 };
 
 }

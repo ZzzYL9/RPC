@@ -13,6 +13,7 @@
         op = EPOLL_CTL_MOD; \
     } \
     epoll_event tmp = event->getEpollEvent(); \
+    INFOLOG("epoll_event.events = %d", (int)tmp.events); \
     int rt = epoll_ctl(m_epoll_fd, op, event->getFd(), &tmp); \
     if(rt == -1){ \
         ERRORLOG("failed epoll_ctl when add fd %d, errno = %d, error info = %s", event->getFd(), errno, strerror(errno)); \
@@ -100,7 +101,7 @@ namespace rocket{
             epoll_event result_events[g_epoll_max_events];
             // DEBUGLOG("now begin to epoll_wait");
             int rt = epoll_wait(m_epoll_fd, result_events, g_epoll_max_events, timeout);
-            DEBUGLOG("now end epoll_wait, rt = %d", rt);
+            // DEBUGLOG("now end epoll_wait, rt = %d", rt);
             
             if(rt < 0){
                 ERRORLOG("epoll_wait error, error=", errno);
@@ -109,6 +110,7 @@ namespace rocket{
                     epoll_event trigger_event = result_events[i];
                     FdEvent* fd_event = static_cast<FdEvent*>(trigger_event.data.ptr); // ????????????
                     if(fd_event == nullptr){ // ???????????????
+                        ERRORLOG("fd_event = NULL, continue");
                         continue;
                     }
                     if(trigger_event.events & EPOLLIN){
@@ -119,6 +121,17 @@ namespace rocket{
                         DEBUGLOG("fd %d trigger in EPOLLOUT event", fd_event->getFd());
                         addTask(fd_event->handler(FdEvent::OUT_EVENT));
                     }
+
+                    // EPOLLHUP EPOLLERR
+                    if (trigger_event.events & EPOLLERR) {
+                        DEBUGLOG("fd %d trigger EPOLLERROR event", fd_event->getFd())
+                        // 删除出错的套接字
+                        deleteEpollEvent(fd_event);
+                        if (fd_event->handler(FdEvent::ERROR_EVENT) != nullptr) {
+                            DEBUGLOG("fd %d add error callback", fd_event->getFd())
+                            addTask(fd_event->handler(FdEvent::OUT_EVENT));
+                        }
+                    }
                 }
             }
 
@@ -126,10 +139,14 @@ namespace rocket{
     }
 
     void EventLoop::wakeup(){
+        INFOLOG("WAKE UP");
         m_wakeup_fd_event->wakeup();
     }
 
-    void EventLoop::stop(){}
+    void EventLoop::stop(){
+        m_stop_flag = true;
+        wakeup();
+    }
 
     void EventLoop::addEpollEvent(FdEvent *event){
         if(isInLoopThread()){
@@ -195,6 +212,7 @@ namespace rocket{
             ERRORLOG("failed to create event loop, epollfd create error, error info[%d]", errno);
             exit(0);
         }
+        INFOLOG("wakeup fd = %d", m_wakeup_fd);
 
         m_wakeup_fd_event = new WakeupFdEvent(m_wakeup_fd);
         
